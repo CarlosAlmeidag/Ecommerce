@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.dto.ProductRequestDTO;
 import com.example.demo.dto.ProductResponseDTO;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Product;
 import com.example.demo.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,24 +16,34 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
+    /**
+     * Lista todos os produtos ativos com paginação
+     */
     public Page<ProductResponseDTO> getAllProducts(Pageable pageable) {
         return productRepository.findByActiveTrue(pageable)
                 .map(this::toResponseDTO);
     }
 
+    /**
+     * Busca um produto por ID
+     */
     public ProductResponseDTO getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com ID: " + id));
         return toResponseDTO(product);
     }
 
-
+    /**
+     * Busca produtos por categoria
+     */
     public Page<ProductResponseDTO> getProductsByCategory(String category, Pageable pageable) {
         return productRepository.findByCategoryAndActiveTrue(category, pageable)
                 .map(this::toResponseDTO);
     }
 
-
+    /**
+     * Cria um novo produto (ADMIN)
+     */
     public ProductResponseDTO createProduct(ProductRequestDTO request) {
         Product product = Product.builder()
                 .name(request.getName())
@@ -47,10 +58,12 @@ public class ProductService {
         return toResponseDTO(savedProduct);
     }
 
-
+    /**
+     * Atualiza um produto (ADMIN)
+     */
     public ProductResponseDTO updateProduct(Long id, ProductRequestDTO request) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com ID: " + id));
 
         product.setName(request.getName());
         product.setDescription(request.getDescription());
@@ -62,16 +75,19 @@ public class ProductService {
         return toResponseDTO(updatedProduct);
     }
 
-
-
+    /**
+     * Desativa um produto (ADMIN)
+     */
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com ID: " + id));
         product.setActive(false);
         productRepository.save(product);
     }
 
-
+    /**
+     * Converte Product para ProductResponseDTO
+     */
     private ProductResponseDTO toResponseDTO(Product product) {
         return new ProductResponseDTO(
                 product.getId(),

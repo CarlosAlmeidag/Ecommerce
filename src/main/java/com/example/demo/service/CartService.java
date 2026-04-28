@@ -3,6 +3,8 @@ package com.example.demo.service;
 import com.example.demo.dto.CartItemRequestDTO;
 import com.example.demo.dto.CartItemResponseDTO;
 import com.example.demo.dto.CartResponseDTO;
+import com.example.demo.exception.BusinessException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Cart;
 import com.example.demo.model.CartItem;
 import com.example.demo.model.Product;
@@ -30,7 +32,7 @@ public class CartService {
 
     private Cart getOrCreateCart(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         return cartRepository.findByUserId(user.getId())
                 .orElseGet(() -> {
@@ -47,11 +49,11 @@ public class CartService {
         Cart cart = getOrCreateCart(userEmail);
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com ID: " + request.getProductId()));
 
         // Verifica estoque
         if (product.getStock() < request.getQuantity()) {
-            throw new RuntimeException("Estoque insuficiente para: " + product.getName());
+            throw new BusinessException("Estoque insuficiente para: " + product.getName() + ". Disponível: " + product.getStock());
         }
 
         // Verifica se o produto já está no carrinho
@@ -81,7 +83,7 @@ public class CartService {
         Cart cart = getOrCreateCart(userEmail);
 
         CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado no carrinho"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado no carrinho"));
 
         cartItemRepository.delete(item);
 
@@ -98,13 +100,13 @@ public class CartService {
         Cart cart = getOrCreateCart(userEmail);
 
         CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), productId)
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado no carrinho"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado no carrinho"));
 
         Product product = item.getProduct();
 
         // Verifica estoque
         if (product.getStock() < quantity) {
-            throw new RuntimeException("Estoque insuficiente para: " + product.getName());
+            throw new BusinessException("Estoque insuficiente para: " + product.getName() + ". Disponível: " + product.getStock());
         }
 
         item.setQuantity(quantity);
@@ -119,7 +121,7 @@ public class CartService {
         return toResponseDTO(cart);
     }
 
-
+    //limpa o carrinho
     @Transactional
     public void clearCart(String userEmail) {
         Cart cart = getOrCreateCart(userEmail);
@@ -130,7 +132,7 @@ public class CartService {
 
     private CartResponseDTO toResponseDTO(Cart cart) {
         cart = cartRepository.findById(cart.getId())
-                .orElseThrow(() -> new RuntimeException("Carrinho não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Carrinho não encontrado"));
 
         List<CartItemResponseDTO> itemsDto = cart.getItems().stream()
                 .map(item -> new CartItemResponseDTO(

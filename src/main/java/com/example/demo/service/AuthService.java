@@ -4,6 +4,8 @@ import com.example.demo.config.JwtService;
 import com.example.demo.dto.AuthResponseDTO;
 import com.example.demo.dto.LoginRequestDTO;
 import com.example.demo.dto.RegisterRequestDTO;
+import com.example.demo.exception.BusinessException;
+import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Role;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
@@ -24,11 +26,12 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponseDTO register(RegisterRequestDTO request) {
-
+        // Verifica se email já existe
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email já cadastrado");
+            throw new BusinessException("Email já cadastrado");
         }
 
+        // Cria novo usuário
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -46,17 +49,17 @@ public class AuthService {
 
 
     public AuthResponseDTO login(LoginRequestDTO request) {
-
-        Authentication authentication = authenticationManager.authenticate(
+        // Autentica as credenciais
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
                 )
         );
 
-
+        // Busca usuário autenticado
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         // Gera token JWT
         String token = jwtService.generateToken(user.getEmail());
