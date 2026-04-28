@@ -23,11 +23,4 @@ public class ErrorResponseDTO {
     private String path;
 
     private List<FieldError> errors;
-
-    @Data
-    @AllArgsConstructor
-    public static class FieldError {
-        private String field;
-        private String message;
-    }
 }
