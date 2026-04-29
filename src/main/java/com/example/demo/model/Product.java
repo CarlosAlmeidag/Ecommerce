@@ -18,20 +18,20 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Column(nullable = false)
-    private String name;
+    public String name;
 
-    private String description;
-
-    @Column(nullable = false)
-    private BigDecimal price;
+    public String description;
 
     @Column(nullable = false)
-    private Integer stock;
+    public BigDecimal price;
 
-    private String category;
+    @Column(nullable = false)
+    public Integer stock;
 
-    private boolean active = true;
+    public String category;
+
+    public boolean active = true;
 }

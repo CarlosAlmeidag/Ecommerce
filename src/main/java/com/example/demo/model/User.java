@@ -43,22 +43,37 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
+
         return email;
     }
 
     @Override
+    public String getPassword() {
+
+        return password;
+    }
+
+    @Override
     public boolean isAccountNonExpired() {
-        return true; }
+
+        return true;
+    }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; }
+
+        return true;
+    }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; }
+
+        return true;
+    }
 
     @Override
     public boolean isEnabled() {
-        return true; }
+
+        return true;
+    }
 }

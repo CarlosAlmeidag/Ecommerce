@@ -5,7 +5,6 @@ import com.example.demo.dto.FieldError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,20 +17,18 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Trata exceções de validação (400)
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidationExceptions(
             MethodArgumentNotValidException ex,
             WebRequest request
     ) {
-        List<com.example.demo.dto.FieldError> fieldErrors = new ArrayList<>();
+        List<FieldError> fieldErrors = new ArrayList<>();
 
         ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
+            org.springframework.validation.FieldError springFieldError = (org.springframework.validation.FieldError) error;
+            String fieldName = springFieldError.getField();
             String errorMessage = error.getDefaultMessage();
-            fieldErrors.add(new com.example.demo.dto.FieldError(fieldName, errorMessage));
+            fieldErrors.add(new FieldError(fieldName, errorMessage));
         });
 
         ErrorResponseDTO response = ErrorResponseDTO.builder()
@@ -45,9 +42,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * Trata ResourceNotFoundException (404)
-     */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleResourceNotFoundException(
             ResourceNotFoundException ex,
@@ -63,27 +57,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
-    /**
-     * Trata BusinessException (422)
-     */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDTO> handleBusinessException(
             BusinessException ex,
             WebRequest request
     ) {
         ErrorResponseDTO response = ErrorResponseDTO.builder()
-                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .status(422)
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
 
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
+        return ResponseEntity.status(422).body(response);
     }
 
-    /**
-     * Trata UnauthorizedException (403)
-     */
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponseDTO> handleUnauthorizedException(
             UnauthorizedException ex,
@@ -99,9 +87,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
-    /**
-     * Trata BadCredentialsException (401)
-     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> handleBadCredentialsException(
             BadCredentialsException ex,
@@ -117,9 +102,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
-    /**
-     * Trata exceções genéricas (500)
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGlobalException(
             Exception ex,
