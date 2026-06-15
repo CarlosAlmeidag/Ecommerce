@@ -26,12 +26,12 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     public AuthResponseDTO register(RegisterRequestDTO request) {
-        // Verifica se email já existe
+        // verifica se email já existe
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("Email já cadastrado");
         }
 
-        // Cria novo usuário
+        // cria novo usuário
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
